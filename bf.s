@@ -42,8 +42,8 @@ tape_a: .equ tape::abs32
 _start:
     ; FreeBSD x86_64: rdi → argc, rdi+8 → argv[0], rdi+16 → argv[1]
     mov  r8, rdi
-    movd eax, [r8]         ; eax = argc
-    cmpd eax, 2
+    mov dword eax, [r8]         ; eax = argc
+    cmp dword eax, 2
     jge  _open_file
 
     ; 引数不足: 使い方を stderr に表示して終了
@@ -91,23 +91,23 @@ main_loop:
     ; 現在の BF 命令を al に読み込む
     mov rax, prog_buf
     add rax, r14
-    movb al, [rax]
+    mov byte al, [rax]
 
-    cmpb al, '>'
+    cmp byte al, '>'
     je   op_inc_ptr
-    cmpb al, '<'
+    cmp byte al, '<'
     je   op_dec_ptr
-    cmpb al, '+'
+    cmp byte al, '+'
     je   op_inc_val
-    cmpb al, '-'
+    cmp byte al, '-'
     je   op_dec_val
-    cmpb al, '.'
+    cmp byte al, '.'
     je   op_output
-    cmpb al, ','
+    cmp byte al, ','
     je   op_input
-    cmpb al, '['
+    cmp byte al, '['
     je   op_loop_start
-    cmpb al, ']'
+    cmp byte al, ']'
     je   op_loop_end
 
 next:
@@ -125,11 +125,11 @@ op_dec_ptr:
     jmp next
 
 op_inc_val:
-    incb [tape_a+r15]      ; + : 現在セルをインクリメント [SIB R_X86_64_32]
+    inc byte [tape_a+r15]      ; + : 現在セルをインクリメント [SIB R_X86_64_32]
     jmp next
 
 op_dec_val:
-    decb [tape_a+r15]      ; - : 現在セルをデクリメント [SIB R_X86_64_32]
+    dec byte [tape_a+r15]      ; - : 現在セルをデクリメント [SIB R_X86_64_32]
     jmp next
 
 op_output:
@@ -157,7 +157,7 @@ op_input:
 
 op_loop_start:
     ; [ : 現在セルが 0 なら対応する ']' の直後へジャンプ
-    cmpb [tape_a+r15], 0   ; [SIB R_X86_64_32]
+    cmp byte [tape_a+r15], 0   ; [SIB R_X86_64_32]
     jne  next
 
     mov rcx, 1             ; ネスト深度
@@ -167,10 +167,10 @@ op_loop_start:
     jge exit
     mov rax, prog_buf
     add rax, r14
-    movb al, [rax]
-    cmpb al, '['
+    mov byte al, [rax]
+    cmp byte al, '['
     je   .inc_depth
-    cmpb al, ']'
+    cmp byte al, ']'
     je   .dec_depth
     jmp  .find_end
 .inc_depth:
@@ -184,7 +184,7 @@ op_loop_start:
 
 op_loop_end:
     ; ] : 現在セルが 0 でなければ対応する '[' の直後へ戻る
-    cmpb [tape_a+r15], 0   ; [SIB R_X86_64_32]
+    cmp byte [tape_a+r15], 0   ; [SIB R_X86_64_32]
     je   next
 
     mov rcx, 1             ; ネスト深度
@@ -194,10 +194,10 @@ op_loop_end:
     dec r14
     mov rax, prog_buf
     add rax, r14
-    movb al, [rax]
-    cmpb al, ']'
+    mov byte al, [rax]
+    cmp byte al, ']'
     je   .inc_depth2
-    cmpb al, '['
+    cmp byte al, '['
     je   .dec_depth2
     jmp  .find_start
 .inc_depth2:
