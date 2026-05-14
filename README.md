@@ -1,3 +1,5 @@
+This .axx file is generated with AI assist.
+
 assemble
 ```
 axx x86_64.axx bf.s -o bf.o
