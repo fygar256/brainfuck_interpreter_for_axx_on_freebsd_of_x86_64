@@ -33,16 +33,6 @@ SYS_WRITE: .equ  4
 SYS_OPEN:  .equ  5
 SYS_CLOSE: .equ  6
 
-.section .data
-usage:     .ascii "Usage: bf <file>",10
-usage_len: .equ $$ - usage
-.endsection
-
-.section .bss
-tape:     .zero 65536
-prog_buf: .zero 1048576
-.endsection
-
 ; SIB abs32 エイリアス:
 ;   INCB/DECB/CMPB [tape_a+r15] が R_X86_64_32 リロケーションを生成する
 tape_a: .equ tape::abs32
@@ -50,8 +40,8 @@ tape_a: .equ tape::abs32
 .section .text
 
 _start:
-    ; FreeBSD x86_64: rsp → argc, rsp+8 → argv[0], rsp+16 → argv[1]
-    mov  r8, rsp
+    ; FreeBSD x86_64: rdi → argc, rdi+8 → argv[0], rdi+16 → argv[1]
+    mov  r8, rdi
     movd eax, [r8]         ; eax = argc
     cmpd eax, 2
     jge  _open_file
@@ -228,3 +218,14 @@ exit:
     mov rax, SYS_EXIT
     xor rdi, rdi
     syscall
+
+.section .data
+usage:     .ascii "Usage: bf <file>",10
+usage_len: .equ $$ - usage
+.endsection
+
+.section .bss
+tape:     .zero 65536
+prog_buf: .zero 1048576
+.endsection
+
