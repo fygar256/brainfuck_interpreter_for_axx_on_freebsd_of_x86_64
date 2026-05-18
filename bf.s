@@ -225,7 +225,7 @@ usage_len: .equ $$ - usage
 .endsection
 
 .section .bss
-tape:     .resv 65536
-prog_buf: .resv 1048576
+tape:     .zero 65536
+prog_buf: .resb 1048576
 .endsection
 
