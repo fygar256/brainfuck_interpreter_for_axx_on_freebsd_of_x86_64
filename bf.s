@@ -40,8 +40,9 @@ tape_a: .equ tape::abs32
 .section .text
 
 _start:
-    ; FreeBSD x86_64: rdi → argc, rdi+8 → argv[0], rdi+16 → argv[1]
-    mov  r8, rdi
+    ; System V AMD64 ABI (FreeBSD/Linux 共通):
+    ;   プロセスエントリ時 RSP → argc, RSP+8 → argv[0], RSP+16 → argv[1]
+    mov  r8, rsp
     mov dword eax, [r8]         ; eax = argc
     cmp dword eax, 2
     jge  _open_file
@@ -64,14 +65,13 @@ _open_file:
     xor rsi, rsi           ; O_RDONLY = 0
     xor rdx, rdx
     syscall
-    jc  exit_error         ; FreeBSD: CF=1 はシステムコールエラー
-                           ; (Linux では: jl exit_error)
+    js  exit_error         ; FreeBSD: SF=1(負値)=エラー (Linux も同様)
     mov r12, rax           ; r12 = fd
 
     ; ファイルを prog_buf に一括読み込み
     mov rax, SYS_READ
     mov rdi, r12
-    mov rsi, prog_buf
+    lea rsi, [RIP+prog_buf]
     mov rdx, 1048576
     syscall
     mov r13, rax           ; r13 = プログラム長
@@ -89,7 +89,7 @@ main_loop:
     jge exit
 
     ; 現在の BF 命令を al に読み込む
-    mov rax, prog_buf
+    lea rax, [RIP+prog_buf]
     add rax, r14
     mov byte al, [rax]
 
@@ -165,7 +165,7 @@ op_loop_start:
     inc r14
     cmp r14, r13
     jge exit
-    mov rax, prog_buf
+    lea rax, [RIP+prog_buf]
     add rax, r14
     mov byte al, [rax]
     cmp byte al, '['
@@ -192,7 +192,7 @@ op_loop_end:
     cmp r14, 0
     jle exit
     dec r14
-    mov rax, prog_buf
+    lea rax, [RIP+prog_buf]
     add rax, r14
     mov byte al, [rax]
     cmp byte al, ']'
