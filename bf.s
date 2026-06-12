@@ -25,6 +25,7 @@
 
 .global _start
 
+
 ; --- FreeBSD syscall番号 ---
 ; (Linux: EXIT=60, READ=0, WRITE=1, OPEN=2, CLOSE=3)
 SYS_EXIT:  .equ  1
@@ -33,18 +34,14 @@ SYS_WRITE: .equ  4
 SYS_OPEN:  .equ  5
 SYS_CLOSE: .equ  6
 
-; SIB abs32 エイリアス:
-;   INCB/DECB/CMPB [tape_a+r15] が R_X86_64_32 リロケーションを生成する
-tape_a: .equ tape::abs32
-
 .section .text
 
 _start:
     ; System V AMD64 ABI (FreeBSD/Linux 共通):
-    ;   プロセスエントリ時 RSP → argc, RSP+8 → argv[0], RSP+16 → argv[1]
-    mov  r8, rsp
-    mov dword eax, [r8]         ; eax = argc
-    cmp dword eax, 2
+    ;   プロセスエントリ時 RDI → argc, RDI+8 → argv[0], RDI+16 → argv[1]
+    mov  r8, rdi
+    mov eax, [r8]         ; eax = argc
+    cmp eax, 2
     jge  _open_file
 
     ; 引数不足: 使い方を stderr に表示して終了
@@ -65,7 +62,7 @@ _open_file:
     xor rsi, rsi           ; O_RDONLY = 0
     xor rdx, rdx
     syscall
-    js  exit_error         ; FreeBSD: SF=1(負値)=エラー (Linux も同様)
+    jl  exit_error         ; FreeBSD: SF=1(負値)=エラー (Linux も同様)
     mov r12, rax           ; r12 = fd
 
     ; ファイルを prog_buf に一括読み込み
@@ -91,23 +88,23 @@ main_loop:
     ; 現在の BF 命令を al に読み込む
     lea rax, [RIP+prog_buf]
     add rax, r14
-    mov byte al, [rax]
+    mov al, [rax]
 
-    cmp byte al, '>'
+    cmp al, '>'
     je   op_inc_ptr
-    cmp byte al, '<'
+    cmp al, '<'
     je   op_dec_ptr
-    cmp byte al, '+'
+    cmp al, '+'
     je   op_inc_val
-    cmp byte al, '-'
+    cmp al, '-'
     je   op_dec_val
-    cmp byte al, '.'
+    cmp al, '.'
     je   op_output
-    cmp byte al, ','
+    cmp al, ','
     je   op_input
-    cmp byte al, '['
+    cmp al, '['
     je   op_loop_start
-    cmp byte al, ']'
+    cmp al, ']'
     je   op_loop_end
 
 next:
@@ -167,10 +164,10 @@ op_loop_start:
     jge exit
     lea rax, [RIP+prog_buf]
     add rax, r14
-    mov byte al, [rax]
-    cmp byte al, '['
+    mov al, [rax]
+    cmp al, '['
     je   .inc_depth
-    cmp byte al, ']'
+    cmp al, ']'
     je   .dec_depth
     jmp  .find_end
 .inc_depth:
@@ -194,10 +191,10 @@ op_loop_end:
     dec r14
     lea rax, [RIP+prog_buf]
     add rax, r14
-    mov byte al, [rax]
-    cmp byte al, ']'
+    mov al, [rax]
+    cmp al, ']'
     je   .inc_depth2
-    cmp byte al, '['
+    cmp al, '['
     je   .dec_depth2
     jmp  .find_start
 .inc_depth2:
@@ -225,6 +222,10 @@ usage_len: .equ $$ - usage
 .endsection
 
 .section .bss
+; SIB abs32 エイリアス:
+;   INCB/DECB/CMPB [tape_a+r15] が R_X86_64_32 リロケーションを生成する
+tape_a: .equ tape::abs32
+
 tape:     .zero 65536
 prog_buf: .resb 1048576
 .endsection
