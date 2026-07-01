@@ -62,7 +62,8 @@ _open_file:
     xor rsi, rsi           ; O_RDONLY = 0
     xor rdx, rdx
     syscall
-    jl  exit_error         ; FreeBSD: SF=1(負値)=エラー (Linux も同様)
+    jc  exit_error
+    jl  exit_error
     mov r12, rax           ; r12 = fd
 
     ; ファイルを prog_buf に一括読み込み
