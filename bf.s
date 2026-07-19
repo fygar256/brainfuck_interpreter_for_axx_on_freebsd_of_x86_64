@@ -6,7 +6,7 @@
 ;   python3 axx.py x86_64.axx bf.s -o bf.o --osabi FreeBSD && ld -o bf bf.o
 ;
 ; build (Linux):
-;   syscall番号を Linux 用 (下記参照) に変更してから:
+;   syscall番号を Linux 用 (下記参照) に変更して、argvを得るポインタをrdiからrspに変更してから:
 ;   python3 axx.py x86_64.axx bf.s -o bf.o && ld -o bf bf.o
 ;
 ; ===== テープアクセスの方針 =====
@@ -37,9 +37,9 @@ SYS_CLOSE: .equ  6
 .section .text
 
 _start:
-    ; System V AMD64 ABI (FreeBSD/Linux 共通):
+    ; System V AMD64 ABI (FreeBSD):
     ;   プロセスエントリ時 RDI → argc, RDI+8 → argv[0], RDI+16 → argv[1]
-    mov  r8, rdi
+    mov  r8, rdi          ; linuxでは、mov r8.rspに変更
     mov eax, [r8]         ; eax = argc
     cmp eax, 2
     jge  _open_file
