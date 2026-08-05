@@ -4,7 +4,7 @@ Default is the FreeBSD version, to change to Linux version, replace the value fr
 
 assemble
 ```
-axx x86_64.axx bf.s -o bf.o
+axx x86_64m.axx bf.s -o bf.o
 ```
 
 link
